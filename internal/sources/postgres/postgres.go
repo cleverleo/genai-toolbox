@@ -36,6 +36,7 @@ type Config struct {
 	User     string `yaml:"user" validate:"required"`
 	Password string `yaml:"password" validate:"required"`
 	Database string `yaml:"database" validate:"required"`
+	Schema   string `yaml:"schema"`
 }
 
 func (r Config) SourceConfigKind() string {
@@ -81,9 +82,20 @@ func initPostgresConnectionPool(ctx context.Context, tracer trace.Tracer, name, 
 	//nolint:all // Reassigned ctx
 	ctx, span := sources.InitConnectionSpan(ctx, tracer, SourceKind, name)
 	defer span.End()
-	// urlExample := "postgres:dd//username:password@localhost:5432/database_name"
-	i := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, pass, host, port, dbname)
-	pool, err := pgxpool.New(ctx, i)
+
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, pass, host, port, dbname)
+
+	config, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse connection string: %w", err)
+	}
+
+	if config.ConnConfig.RuntimeParams == nil {
+		config.ConnConfig.RuntimeParams = make(map[string]string)
+	}
+	config.ConnConfig.RuntimeParams["search_path"] = "public"
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create connection pool: %w", err)
 	}
