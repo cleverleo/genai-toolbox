@@ -44,7 +44,7 @@ func (r Config) SourceConfigKind() string {
 }
 
 func (r Config) Initialize(ctx context.Context, tracer trace.Tracer) (sources.Source, error) {
-	pool, err := initPostgresConnectionPool(ctx, tracer, r.Name, r.Host, r.Port, r.User, r.Password, r.Database)
+	pool, err := initPostgresConnectionPool(ctx, tracer, r.Name, r.Host, r.Port, r.User, r.Password, r.Database, r.Schema)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create pool: %w", err)
 	}
@@ -78,7 +78,7 @@ func (s *Source) PostgresPool() *pgxpool.Pool {
 	return s.Pool
 }
 
-func initPostgresConnectionPool(ctx context.Context, tracer trace.Tracer, name, host, port, user, pass, dbname string) (*pgxpool.Pool, error) {
+func initPostgresConnectionPool(ctx context.Context, tracer trace.Tracer, name, host, port, user, pass, dbname string, schema string) (*pgxpool.Pool, error) {
 	//nolint:all // Reassigned ctx
 	ctx, span := sources.InitConnectionSpan(ctx, tracer, SourceKind, name)
 	defer span.End()
@@ -93,7 +93,10 @@ func initPostgresConnectionPool(ctx context.Context, tracer trace.Tracer, name, 
 	if config.ConnConfig.RuntimeParams == nil {
 		config.ConnConfig.RuntimeParams = make(map[string]string)
 	}
-	config.ConnConfig.RuntimeParams["search_path"] = "public"
+
+	if schema != "" {
+		config.ConnConfig.RuntimeParams["search_path"] = schema
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
