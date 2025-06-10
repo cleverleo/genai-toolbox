@@ -18,6 +18,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"runtime"
 	"io"
 	"os"
 	"os/signal"
@@ -32,15 +33,59 @@ import (
 	"github.com/googleapis/genai-toolbox/internal/server"
 	"github.com/googleapis/genai-toolbox/internal/telemetry"
 	"github.com/googleapis/genai-toolbox/internal/util"
+
+	// Import tool packages for side effect of registration
+	_ "github.com/googleapis/genai-toolbox/internal/tools/alloydbainl"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/bigquery"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/bigqueryexecutesql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/bigquerygetdatasetinfo"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/bigquerygettableinfo"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/bigquerylistdatasetids"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/bigquerylisttableids"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/bigtable"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/couchbase"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/dgraph"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/http"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/mssqlexecutesql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/mssqlsql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/mysqlexecutesql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/mysqlsql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/neo4j"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/postgresexecutesql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/postgressql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/spanner"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/spannerexecutesql"
+	_ "github.com/googleapis/genai-toolbox/internal/tools/sqlitesql"
+
 	"github.com/spf13/cobra"
+
+	_ "github.com/googleapis/genai-toolbox/internal/sources/alloydbpg"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/bigquery"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/bigtable"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/cloudsqlmssql"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/cloudsqlmysql"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/cloudsqlpg"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/couchbase"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/dgraph"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/http"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/mssql"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/mysql"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/neo4j"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/postgres"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/spanner"
+	_ "github.com/googleapis/genai-toolbox/internal/sources/sqlite"
 )
 
 var (
-	// versionString indicates the version of this library.
-	//go:embed version.txt
+	// versionString stores the full semantic version, including build metadata.
 	versionString string
+	// versionNum indicates the numerical part fo the version
+	//go:embed version.txt
+	versionNum string
 	// metadataString indicates additional build or distribution metadata.
-	metadataString string
+	buildType string = "dev" // should be one of "dev", "binary", or "container"
+	// commitSha is the git commit it was built from
+	commitSha string
 )
 
 func init() {
@@ -49,10 +94,11 @@ func init() {
 
 // semanticVersion returns the version of the CLI including a compile-time metadata.
 func semanticVersion() string {
-	v := strings.TrimSpace(versionString)
-	if metadataString != "" {
-		v += "+" + metadataString
+	metadataStrings := []string{buildType, runtime.GOOS, runtime.GOARCH}
+	if commitSha != "" {
+		metadataStrings = append(metadataStrings, commitSha)
 	}
+	v := strings.TrimSpace(versionNum) + "+" + strings.Join(metadataStrings, ".")
 	return v
 }
 
@@ -228,13 +274,13 @@ func run(cmd *Command) error {
 		}
 		cmd.logger = logger
 	default:
-		return fmt.Errorf("logging format invalid.")
+		return fmt.Errorf("logging format invalid")
 	}
 
 	ctx = util.WithLogger(ctx, cmd.logger)
 
 	// Set up OpenTelemetry
-	otelShutdown, err := telemetry.SetupOTel(ctx, cmd.Command.Version, cmd.cfg.TelemetryOTLP, cmd.cfg.TelemetryGCP, cmd.cfg.TelemetryServiceName)
+	otelShutdown, err := telemetry.SetupOTel(ctx, cmd.Version, cmd.cfg.TelemetryOTLP, cmd.cfg.TelemetryGCP, cmd.cfg.TelemetryServiceName)
 	if err != nil {
 		errMsg := fmt.Errorf("error setting up OpenTelemetry: %w", err)
 		cmd.logger.ErrorContext(ctx, errMsg.Error())
@@ -265,6 +311,8 @@ func run(cmd *Command) error {
 		}
 		logMsg := fmt.Sprint("Using prebuilt tool configuration for ", cmd.prebuiltConfig)
 		cmd.logger.InfoContext(ctx, logMsg)
+		// Append prebuilt.source to Version string for the User Agent
+		cmd.cfg.Version += "+prebuilt." + cmd.prebuiltConfig
 	} else {
 		// Set default value of tools-file flag to tools.yaml
 		if cmd.tools_file == "" {
@@ -339,7 +387,7 @@ func run(cmd *Command) error {
 		cmd.logger.WarnContext(shutdownContext, "Shutting down gracefully...")
 		err := s.Shutdown(shutdownContext)
 		if err == context.DeadlineExceeded {
-			return fmt.Errorf("graceful shutdown timed out... forcing exit.")
+			return fmt.Errorf("graceful shutdown timed out... forcing exit")
 		}
 	}
 

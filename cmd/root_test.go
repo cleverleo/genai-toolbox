@@ -18,6 +18,7 @@ import (
 	"bytes"
 	_ "embed"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -37,7 +38,9 @@ import (
 
 func withDefaults(c server.ServerConfig) server.ServerConfig {
 	data, _ := os.ReadFile("version.txt")
-	c.Version = strings.TrimSpace(string(data))
+	version := strings.TrimSpace(string(data)) // Preserving 'data', new var for clarity
+	c.Version = version + "+" + strings.Join([]string{"dev", runtime.GOOS, runtime.GOARCH}, ".")
+
 	if c.Address == "" {
 		c.Address = "127.0.0.1"
 	}
@@ -358,7 +361,7 @@ func TestParseToolFile(t *testing.T) {
 				Tools: server.ToolConfigs{
 					"example_tool": postgressql.Config{
 						Name:        "example_tool",
-						Kind:        postgressql.ToolKind,
+						Kind:        "postgres-sql",
 						Source:      "my-pg-instance",
 						Description: "some description",
 						Statement:   "SELECT * FROM SQL_STATEMENT;\n",
@@ -489,7 +492,7 @@ func TestParseToolFileWithAuth(t *testing.T) {
 				Tools: server.ToolConfigs{
 					"example_tool": postgressql.Config{
 						Name:         "example_tool",
-						Kind:         postgressql.ToolKind,
+						Kind:         "postgres-sql",
 						Source:       "my-pg-instance",
 						Description:  "some description",
 						Statement:    "SELECT * FROM SQL_STATEMENT;\n",
@@ -588,7 +591,7 @@ func TestParseToolFileWithAuth(t *testing.T) {
 				Tools: server.ToolConfigs{
 					"example_tool": postgressql.Config{
 						Name:         "example_tool",
-						Kind:         postgressql.ToolKind,
+						Kind:         "postgres-sql",
 						Source:       "my-pg-instance",
 						Description:  "some description",
 						Statement:    "SELECT * FROM SQL_STATEMENT;\n",
@@ -689,7 +692,7 @@ func TestParseToolFileWithAuth(t *testing.T) {
 				Tools: server.ToolConfigs{
 					"example_tool": postgressql.Config{
 						Name:         "example_tool",
-						Kind:         postgressql.ToolKind,
+						Kind:         "postgres-sql",
 						Source:       "my-pg-instance",
 						Description:  "some description",
 						Statement:    "SELECT * FROM SQL_STATEMENT;\n",
@@ -842,7 +845,7 @@ func TestEnvVarReplacement(t *testing.T) {
 				Tools: server.ToolConfigs{
 					"example_tool": http.Config{
 						Name:         "example_tool",
-						Kind:         http.ToolKind,
+						Kind:         "http",
 						Source:       "my-instance",
 						Method:       "GET",
 						Path:         "search?name=alice&pet=cat",

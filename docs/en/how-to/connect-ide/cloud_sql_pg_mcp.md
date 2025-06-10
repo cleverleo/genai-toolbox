@@ -3,7 +3,7 @@ title: "Cloud SQL for Postgres using MCP"
 type: docs
 weight: 2
 description: >
-  Connect your IDE to Cloud SQl for Postgres using Toolbox.
+  Connect your IDE to Cloud SQL for Postgres using Toolbox.
 ---
 
 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol for connecting Large Language Models (LLMs) to data sources like Cloud SQL. This guide covers how to use [MCP Toolbox for Databases][toolbox] to expose your developer assistant tools to a Cloud SQL for Postgres instance:
@@ -50,19 +50,19 @@ description: >
    <!-- {x-release-please-start-version} -->
    {{< tabpane persist=header >}}
 {{< tab header="linux/amd64" lang="bash" >}}
-curl -O https://storage.googleapis.com/genai-toolbox/v0.6.0/linux/amd64/toolbox
+curl -O https://storage.googleapis.com/genai-toolbox/v0.7.0/linux/amd64/toolbox
 {{< /tab >}}
 
 {{< tab header="darwin/arm64" lang="bash" >}}
-curl -O https://storage.googleapis.com/genai-toolbox/v0.6.0/darwin/arm64/toolbox
+curl -O https://storage.googleapis.com/genai-toolbox/v0.7.0/darwin/arm64/toolbox
 {{< /tab >}}
 
 {{< tab header="darwin/amd64" lang="bash" >}}
-curl -O https://storage.googleapis.com/genai-toolbox/v0.6.0/darwin/amd64/toolbox
+curl -O https://storage.googleapis.com/genai-toolbox/v0.7.0/darwin/amd64/toolbox
 {{< /tab >}}
 
 {{< tab header="windows/amd64" lang="bash" >}}
-curl -O https://storage.googleapis.com/genai-toolbox/v0.6.0/windows/amd64/toolbox
+curl -O https://storage.googleapis.com/genai-toolbox/v0.7.0/windows/amd64/toolbox
 {{< /tab >}}
 {{< /tabpane >}}
     <!-- {x-release-please-end} -->

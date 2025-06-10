@@ -17,8 +17,7 @@ This guide assumes you have already done the following:
 1.  Installed and configured the [Google Cloud SDK (gcloud CLI)][install-gcloud].
 1.  Authenticated with Google Cloud for Application Default Credentials (ADC):
     ```bash
-    gcloud auth login
-    gcloud auth application-default login
+    gcloud auth login --update-adc
     ```
 1.  Set your default Google Cloud project (replace `YOUR_PROJECT_ID` with your actual project ID):
     ```bash
@@ -132,7 +131,7 @@ In this section, we will download Toolbox, configure our tools in a `tools.yaml`
     <!-- {x-release-please-start-version} -->
     ```bash
     export OS="linux/amd64" # one of linux/amd64, darwin/arm64, darwin/amd64, or windows/amd64
-    curl -O https://storage.googleapis.com/genai-toolbox/v0.6.0/$OS/toolbox
+    curl -O https://storage.googleapis.com/genai-toolbox/v0.7.0/$OS/toolbox
     ```
     <!-- {x-release-please-end} -->
 
@@ -316,8 +315,8 @@ queries = [
 
 def main():
     # TODO(developer): replace this with another model if needed
-    model = ChatVertexAI(model_name="gemini-1.5-pro")
-    # model = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
+    model = ChatVertexAI(model_name="gemini-2.0-flash-001")
+    # model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-001")
     # model = ChatAnthropic(model="claude-3-5-sonnet-20240620")
     
     # Load the tools from the Toolbox server
@@ -368,12 +367,12 @@ queries = [
 async def main():
     # TODO(developer): replace this with another model if needed
     llm = GoogleGenAI(
-        model="gemini-1.5-pro",
+        model="gemini-2.0-flash-001",
         vertexai_config={"location": "us-central1"},
     )
     # llm = GoogleGenAI(
     #     api_key=os.getenv("GOOGLE_API_KEY"),
-    #     model="gemini-1.5-pro",
+    #     model="gemini-2.0-flash-001",
     # )
     # llm = Anthropic(
     #   model="claude-3-7-sonnet-latest",
@@ -432,7 +431,7 @@ with ToolboxSyncClient("http://127.0.0.1:5000") as toolbox_client:
     # --- Configure the Agent ---
 
     root_agent = Agent(
-        model='gemini-2.0-flash',
+        model='gemini-2.0-flash-001',
         name='hotel_agent',
         description='A helpful AI assistant that can search and book hotels.',
         instruction=prompt,
