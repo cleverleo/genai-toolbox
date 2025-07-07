@@ -17,6 +17,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/goccy/go-yaml"
 	"github.com/googleapis/genai-toolbox/internal/sources"
